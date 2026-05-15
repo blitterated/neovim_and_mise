@@ -1,0 +1,14 @@
+# I dislike these files
+.DS_Store
+._*
+Thumbs.db
+
+# ignore [Neo]Vim temp, backup , and swapfiles
+*~
+\#*#
+*.swo
+*.swp
+
+# Ignore test dir backups
+test_dir_backups/*.tgz
+test_dir_backups/*.tar.gz
