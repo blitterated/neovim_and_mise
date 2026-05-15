@@ -9,6 +9,10 @@ Thumbs.db
 *.swo
 *.swp
 
+# Ignore test dir
+__test_dir/**
+
+
 # Ignore test dir backups
 test_dir_backups/*.tgz
 test_dir_backups/*.tar.gz
