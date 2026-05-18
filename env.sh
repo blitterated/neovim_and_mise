@@ -4,16 +4,18 @@
 #
 # Source this file. Don't just execute it.
 
-# export nvim_config_root="${HOME}/.config/nvim"
-# export nvim_tool_install_root="${HOME}/.local/share/nvim"
+# export NVIM_CONFIG_ROOT="${HOME}/.config/nvim"
+# export NVIM_TOOL_INSTALL_ROOT="${HOME}/.local/share/nvim"
 
-script_dir="$(dirname "$0")"
-export test_dir="${script_dir}/__test_dir"
+export CUR_WRK_DIR="$(dirname "$0")"
 
-export nvim_config_root="${test_dir}/config_root"
-nvim_tool_install_root="${test_dir}/installs"
+export TEST_DIR_NAME="__test_dir"
+export TEST_DIR="${CUR_WRK_DIR}/${TEST_DIR_NAME}"
 
-export nvim_mise_global_config_root="${nvim_config_root}/mise/"
+export NVIM_CONFIG_ROOT="${TEST_DIR}/config_root"
+export NVIM_TOOL_INSTALL_ROOT="${TEST_DIR}/installs"
+
+export NVIM_MISE_GLOBAL_CONFIG_ROOT="${NVIM_CONFIG_ROOT}/mise/"
 
 # config file must be named config.neovim.toml or mise.neovim.toml
 export MISE_ENV="neovim"
@@ -23,9 +25,9 @@ export MISE_ENV="neovim"
 export MISE_GLOBAL_CONFIG_ROOT="nvim_mise_global_config_root"
 
 # cleaner install of neovim related tools (LSPs and deps) to a dir under neovim's data dir.
-export MISE_INSTALLS_DIR="${nvim_tool_install_root}/mise/installs/"
+export MISE_INSTALLS_DIR="${NVIM_TOOL_INSTALL_ROOT}/mise/installs/"
 
 # prevents merging any config files found above nvim_config_root.
-#export MISE_CEILING_PATHS="${nvim_config_root}"
+#export MISE_CEILING_PATHS="${NVIM_CONFIG_ROOT}"
 
 export MISE_CEILING_PATHS="nvim_mise_global_config_root"
