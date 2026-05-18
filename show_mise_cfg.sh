@@ -1,7 +1,7 @@
 #! /opt/homebrew/bin/bash
 
 # Import mise env vars for an isolated environment for Neovim.
-source ./env.sh
+source ./env.dev.sh
 
 env | ggrep "MISE_"
 

@@ -10,8 +10,13 @@
 #     └── config                NVIM_MISE_CONFIG_DIR
 #         └── mise.toml
 
+CUR_WRK_DIR="$(dirname "$0")"
+
+TEST_DIR_NAME="__test_dir"
+TEST_DIR="${CUR_WRK_DIR}/${TEST_DIR_NAME}"
+
 # Equivalent of {{ config_root }} for Neovim.
-NVIM_CONFIG_ROOT="${HOME}/.config/nvim"
+NVIM_CONFIG_ROOT="${TEST_DIR}/config_root"
 
 # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
 NVIM_MISE_GLOBAL_CONFIG_ROOT="${NVIM_CONFIG_ROOT}/mise"
@@ -21,7 +26,7 @@ NVIM_MISE_GLOBAL_CONFIG_ROOT="${NVIM_CONFIG_ROOT}/mise"
 NVIM_MISE_CONFIG_DIR="${NVIM_MISE_GLOBAL_CONFIG_ROOT}/config"
 
 # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
-NVIM_MISE_TOOL_INSTALLS_DIR="${HOME}/.local/share/nvim"
+NVIM_MISE_TOOL_INSTALLS_DIR="${TEST_DIR}/installs"
 
 # ---------------------------------------------------------
 # MISE CONFIGURATION ENVIRONMENT VARIABLES
@@ -45,7 +50,7 @@ export MISE_GLOBAL_CONFIG_ROOT="${NVIM_MISE_GLOBAL_CONFIG_ROOT}"
 export MISE_GLOBAL_CONFIG_FILE="${NVIM_MISE_CONFIG_DIR}/mise.toml"
 
 # Prevents merging any config files found above $NVIM_CONFIG_ROOT.
-#export MISE_CEILING_PATHS="${NVIM_CONFIG_ROOT}"
+export MISE_CEILING_PATHS="${NVIM_CONFIG_ROOT}"
 
 # This is where tools are installed to when running mise install/use.
 # See:

@@ -3,7 +3,7 @@
 # Same as `set -eu`
 set -o errexit -o nounset
 
-source "./env.sh"
+source "./env.dev.sh"
 
 BACKUP_DIR="test_dir_backups"
 
@@ -20,7 +20,7 @@ if [ -d "${TEST_DIR}" ]; then
 fi
 
 # Create the folder structure
-mkdir -p "${NVIM_MISE_GLOBAL_CONFIG_ROOT}"
+mkdir -p "${NVIM_MISE_CONFIG_DIR}"
 mkdir -p "${NVIM_TOOL_INSTALL_ROOT}"
 
 # Create README for config_root
@@ -29,8 +29,8 @@ When using MISE_CEILING_PATHS, mise will search directories under the directory 
 EOF
 
 # Create mise config file
-#cat << 'EOF' > "${NVIM_MISE_GLOBAL_CONFIG_ROOT}/mise.neovim.toml"
- cat << 'EOF' > "${NVIM_MISE_GLOBAL_CONFIG_ROOT}/mise.toml"
+#cat << 'EOF' > "${NVIM_MISE_CONFIG_DIR}/mise.neovim.toml"
+ cat << 'EOF' > "${NVIM_MISE_CONFIG_DIR}/mise.toml"
 [tools]
 node = "lts"
 "aqua:LuaLS/lua-language-server" = "latest"
