@@ -18,7 +18,7 @@ if [ -d "${TEST_ROOT}/${TEST_DIR}" ]; then
 fi
 
 # Create the folder structure
-mkdir -p "${TEST_ROOT}/${TEST_DIR}/config_root/config"
+mkdir -p "${TEST_ROOT}/${TEST_DIR}/config_root/mise"
 mkdir -p "${TEST_ROOT}/${TEST_DIR}/installs"
 
 # Create README for config_root
@@ -27,7 +27,8 @@ When using MISE_CEILING_PATHS, mise will search directories under the directory 
 EOF
 
 # Create mise config file
-cat << 'EOF' > "${TEST_ROOT}/${TEST_DIR}/config_root/config/mise.neovim.toml"
+#cat << 'EOF' > "${TEST_ROOT}/${TEST_DIR}/config_root/mise/mise.neovim.toml"
+cat << 'EOF' > "${TEST_ROOT}/${TEST_DIR}/config_root/mise/mise.toml"
 [tools]
 node = "lts"
 "aqua:LuaLS/lua-language-server" = "latest"
