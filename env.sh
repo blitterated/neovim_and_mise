@@ -13,9 +13,9 @@ export TEST_DIR_NAME="__test_dir"
 export TEST_DIR="${CUR_WRK_DIR}/${TEST_DIR_NAME}"
 
 export NVIM_CONFIG_ROOT="${TEST_DIR}/config_root"
-export NVIM_TOOL_INSTALL_ROOT="${TEST_DIR}/installs"
-
 export NVIM_MISE_GLOBAL_CONFIG_ROOT="${NVIM_CONFIG_ROOT}/mise/"
+
+export NVIM_TOOL_INSTALL_ROOT="${TEST_DIR}/installs"
 
 # config file must be named config.neovim.toml or mise.neovim.toml
 export MISE_ENV="neovim"
