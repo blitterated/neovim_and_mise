@@ -44,8 +44,8 @@ export MISE_GLOBAL_CONFIG_ROOT="${NVIM_MISE_GLOBAL_CONFIG_ROOT}"
 # Fully qualified path to the isolated global mise config for Neovim
 export MISE_GLOBAL_CONFIG_FILE="${NVIM_MISE_CONFIG_DIR}/mise.toml"
 
-# Prevents merging any config files found above $NVIM_CONFIG_ROOT.
-#export MISE_CEILING_PATHS="${NVIM_CONFIG_ROOT}"
+# Prevents merging any config files found above $NVIM_MISE_GLOBAL_CONFIG_ROOT.
+export MISE_CEILING_PATHS="${NVIM_MISE_GLOBAL_CONFIG_ROOT}"
 
 # This is where tools are installed to when running mise install/use.
 # See:
