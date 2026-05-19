@@ -3,7 +3,8 @@
 # Same as `set -eu`
 set -o errexit -o nounset
 
-source "./env.dev.sh"
+# Import mise env vars for an isolated environment for Neovim.
+source "../lib/env.dev.sh"
 
 BACKUP_DIR="test_dir_backups"
 
