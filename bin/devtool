@@ -1,0 +1,259 @@
+#! /opt/homebrew/bin/bash
+
+# devtool
+#
+# A handy cli tool to for setting up files, folders, and env vars for Neovim/mise experimentation
+
+# Same as `set -eu`
+set -o errexit -o nounset
+
+
+# ---------------------------------------------------------
+# NEOVIM/MISE CONFIGURATION FUNCTIONS
+# ---------------------------------------------------------
+
+
+# Start clean with mise env vars.
+clean_env () {
+  echo "unset MISE_CEILING_PATHS"
+  echo "unset MISE_ENV"
+  echo "unset MISE_GLOBAL_CONFIG_ROOT"
+  echo "unset MISE_INSTALLS_DIR"
+}
+
+
+dev_env () {
+  clean_env
+
+  # The global mise config filename
+  #nvim_mise_global_config_filename="mise.neovim.toml"
+  local nvim_mise_global_config_filename="mise.toml"
+
+  # Equivalent of {{ config_root }} for Neovim.
+  local nvim_config_root="${HOME}/.config/nvim"
+
+  # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
+  local nvim_mise_global_config_root="${nvim_config_root}/mise"
+
+  # mise will not load config files from child dirs of {{ config_root }}.
+  # Config files in {{ config_root }} will be ignored.
+  local nvim_mise_config_dir="${nvim_mise_global_config_root}/config"
+
+  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
+  local nvim_mise_tool_installs_dir="${HOME}/.local/share/nvim"
+
+  # ---------------------------------------------------------
+  # MISE CONFIGURATION ENVIRONMENT VARIABLES
+  # ---------------------------------------------------------
+
+  # Config file must be named config.neovim.toml or mise.neovim.toml.
+  #echo "export MISE_ENV=\"neovim\""
+
+  # Force the global config to live under Neovim's config tree by
+  # making mise's {{ config_root }} live one directory below Neovim's
+  # Relative paths in environment directives are resolved against {{ config_root }}.
+  echo "export MISE_GLOBAL_CONFIG_ROOT=\"${nvim_mise_global_config_root}\""
+
+  # Fully qualified path to the isolated global mise config for Neovim
+  echo "export MISE_GLOBAL_CONFIG_FILE=\"${nvim_mise_config_dir}/${nvim_mise_global_config_filename}\""
+
+  # Prevents merging any config files found above $NVIM_MISE_GLOBAL_CONFIG_ROOT.
+  echo "export MISE_CEILING_PATHS=\"${nvim_mise_global_config_root}\""
+
+  # This is where tools are installed to when running mise install/use.
+  # See:
+  #     https://mise.jdx.dev/directories.html#local-share-mise-installs
+  echo "export MISE_INSTALLS_DIR=\"${nvim_mise_tool_installs_dir}\""
+}
+
+
+test_env () {
+  clean_env
+
+  local work_dir; work_dir="$(dirname "$0")"
+
+  local test_dir_name="test"
+  local test_dir="${work_dir}/${test_dir_name}"
+
+  # The global mise config filename
+  #local nvim_mise_global_config_filename="mise.neovim.toml"
+  local nvim_mise_global_config_filename="mise.toml"
+
+  # Equivalent of {{ config_root }} for Neovim.
+  local nvim_config_root="${test_dir}/config_root"
+
+  # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
+  local nvim_mise_global_config_root="${nvim_config_root}/mise"
+
+  # mise will not load config files from child dirs of {{ config_root }}.
+  # Config files in {{ config_root }} will be ignored.
+  local nvim_mise_config_dir="${nvim_mise_global_config_root}/config"
+
+  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
+  local nvim_mise_tool_installs_dir="${test_dir}/installs"
+
+  # ---------------------------------------------------------
+  # MISE CONFIGURATION ENVIRONMENT VARIABLES
+  # ---------------------------------------------------------
+
+  # Config file must be named config.neovim.toml or mise.neovim.toml.
+  #echo "export MISE_ENV=\"neovim\""
+
+  # Force the global config to live under Neovim's config tree by
+  # making mise's {{ config_root }} live one directory below Neovim's
+  # Relative paths in environment directives are resolved against {{ config_root }}.
+  echo "export MISE_GLOBAL_CONFIG_ROOT=\"${nvim_mise_global_config_root}\""
+
+  # Fully qualified path to the isolated global mise config for Neovim
+  echo "export MISE_GLOBAL_CONFIG_FILE=\"${nvim_mise_config_dir}/${nvim_mise_global_config_filename}\""
+
+  # Prevents merging any config files found above $NVIM_MISE_GLOBAL_CONFIG_ROOT.
+  echo "export MISE_CEILING_PATHS=\"${nvim_mise_global_config_root}\""
+
+  # This is where tools are installed to when running mise install/use.
+  # See:
+  #     https://mise.jdx.dev/directories.html#local-share-mise-installs
+  echo "export MISE_INSTALLS_DIR=\"${nvim_mise_tool_installs_dir}\""
+}
+
+
+# ---------------------------------------------------------
+# "PRIVATE" FUNCTIONS
+# ---------------------------------------------------------
+
+
+errcho () { echo "$@" >&2; }
+
+
+__get_shell_invocation() {
+  local shell_pid="${1}"
+
+  # The "=" after "command" disables header output
+  ps -o command= "${shell_pid}"
+}
+
+
+__get_bin_path_from_lib_path () {
+  local script_rel_path="${1}"
+
+  local script_full_path
+  local lib_dir_path
+  local grandparent_path
+  local bin_dir_path
+
+  script_full_path="$(realpath "${script_rel_path}")"
+  lib_dir_path="$(dirname "${script_full_path}")"
+  grandparent_path="$(dirname "${lib_dir_path}")"
+  bin_dir_path="${grandparent_path}/bin"
+
+  errcho "script_rel_path:  [${script_rel_path}]"  # DEBUG DELETEME
+  errcho "script_full_path: [${script_full_path}]" # DEBUG DELETEME
+  errcho "lib_dir_path:     [${lib_dir_path}]"     # DEBUG DELETEME
+  errcho "grandparent_path: [${grandparent_path}]" # DEBUG DELETEME
+  errcho "bin_dir_path:     [${bin_dir_path}]"     # DEBUG DELETEME
+
+  echo "${bin_dir_path}"
+}
+
+
+__get_bin_path () {
+  local shell_invocation="${1}"
+
+  if [[ $shell_invocation == *"bash"* ]]; then
+    __get_bin_path_from_lib_path "${BASH_SOURCE[0]}"
+  elif [[ $shell_invocation == *"zsh"* ]]; then
+    __get_bin_path_from_lib_path "${(%):-%x}"
+  else
+    # Sorry POSIX shell. You've got no reliable way to retrieve a fully qualified path to a sourced script.
+    errcho "Unsupported shell. Invocation: \"${shell_invocation}\""
+    return 67
+  fi
+}
+
+
+__generate_readme () {
+  echo "When using MISE_CEILING_PATHS, mise will search directories under the directory specified as the ceiling for config files, but _NOT_ the ceiling direct itself."
+}
+
+
+__generate_mise_config () {
+cat << 'EOF'
+[tools]
+node = "lts"
+"aqua:LuaLS/lua-language-server" = "latest"
+"aqua:koalaman/shellcheck"       = "latest"
+"go:mvdan.cc/sh/v3/cmd/shfmt"    = "latest"
+"npm:bash-language-server"       = { version = "latest", depends = ["aqua:koalaman/shellcheck", "go:mvdan.cc/sh/v3/cmd/shfmt"] }
+"npm:prettier"                   = "latest"
+"npm:prettier-plugin-awk"        = { version = "latest", depends = ["npm:prettier"] }
+"npm:npm:prettier-plugin-awk"    = { version = "latest", depends = ["npm:prettier", "npm:prettier-plugin-awk"] }
+EOF
+}
+
+
+# ---------------------------------------------------------
+# SUB COMMAND FUNCTIONS
+# ---------------------------------------------------------
+
+
+# Generate a command that adds this project's bin dir to $PATH.
+# Suitable for sourcing.
+binpath () {
+  local sh_pid;    sh_pid=$$
+  local sh_invoke; sh_invoke="$(__get_shell_invocation "${sh_pid}")"
+  local bin_dir;   bin_dir="$(__get_bin_path "${sh_invoke}")"
+
+  echo "export PATH=\"${PATH}:${bin_dir}\""
+}
+
+
+# Install Neovim LSPs and deps with mise
+install_neovim_lsps () {
+  mise install
+}
+
+
+# Show mise's configuration hierarchy
+show_mise_cfg () {
+  mise config ls
+}
+
+
+# Config dir structucture:
+# $NVIM_CONFIG_ROOT
+# └── mise                      NVIM_MISE_GLOBAL_CONFIG_ROOT
+#     └── config                NVIM_MISE_CONFIG_DIR
+#         └── mise.toml
+setup_test_dir () {
+  local backup_dir="test_dir_backups"
+
+  # Check if test directory exists. If so, back it up and delete the tree
+  if [ -d "${TEST_DIR}" ]; then
+    local timestamp; timestamp=$(date +%s)
+    local backup_filename="${TEST_DIR_NAME}_${timestamp}.tgz"
+
+    gtar -czvf "${backup_filename}" "${TEST_DIR_NAME}"
+    mv "${backup_filename}" "${backup_dir}"
+    rm -rf "${TEST_DIR_NAME}"
+
+    echo "Found \"${TEST_DIR}\". Backed up to \"${backup_dir}/${backup_filename}\""
+  fi
+
+  # Create the folder structure
+  mkdir -p "${NVIM_MISE_CONFIG_DIR}"
+  mkdir -p "${NVIM_TOOL_INSTALL_ROOT}"
+
+  # Create README for config_root
+  __generate_readme > "${NVIM_CONFIG_ROOT}/README.txt"
+
+  # Create mise config file
+  __generate_mise_config > "${NVIM_MISE_CONFIG_DIR}/${NVIM_MISE_GLOBAL_CONFIG_FILENAME}"
+}
+
+
+# ---------------------------------------------------------
+# EXECUTE THE SUB-COMMAND
+# ---------------------------------------------------------
+
+# $@ should match one of the sub-command function names above.
+"${@}"
