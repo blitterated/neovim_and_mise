@@ -9,8 +9,93 @@ set -o errexit -o nounset
 
 
 # ---------------------------------------------------------
-# NEOVIM/MISE CONFIGURATION FUNCTIONS
+# "PRIVATE" FUNCTIONS
 # ---------------------------------------------------------
+
+
+errcho () { echo "$@" >&2; }
+
+
+__get_shell_invocation() {
+  local shell_pid="${1}"
+
+  # The "=" after "command" disables header output
+  ps -o command= "${shell_pid}"
+}
+
+
+__get_bin_path_from_lib_path () {
+  local script_rel_path="${1}"
+
+  local script_full_path
+  local lib_dir_path
+  local grandparent_path
+  local bin_dir_path
+
+  script_full_path="$(realpath "${script_rel_path}")"
+  lib_dir_path="$(dirname "${script_full_path}")"
+  grandparent_path="$(dirname "${lib_dir_path}")"
+  bin_dir_path="${grandparent_path}/bin"
+
+  errcho "script_rel_path:  [${script_rel_path}]"  # DEBUG DELETEME
+  errcho "script_full_path: [${script_full_path}]" # DEBUG DELETEME
+  errcho "lib_dir_path:     [${lib_dir_path}]"     # DEBUG DELETEME
+  errcho "grandparent_path: [${grandparent_path}]" # DEBUG DELETEME
+  errcho "bin_dir_path:     [${bin_dir_path}]"     # DEBUG DELETEME
+
+  echo "${bin_dir_path}"
+}
+
+
+__get_bin_path () {
+  local shell_invocation="${1}"
+
+  if [[ $shell_invocation == *"bash"* ]]; then
+    __get_bin_path_from_lib_path "${BASH_SOURCE[0]}"
+  elif [[ $shell_invocation == *"zsh"* ]]; then
+    __get_bin_path_from_lib_path "${(%):-%x}"
+  else
+    # Sorry POSIX shell. You've got no reliable way to retrieve a fully qualified path to a sourced script.
+    errcho "Unsupported shell. Invocation: \"${shell_invocation}\""
+    return 67
+  fi
+}
+
+
+__generate_readme () {
+  echo "When using MISE_CEILING_PATHS, mise will search directories under the directory specified as the ceiling for config files, but _NOT_ the ceiling direct itself."
+}
+
+
+__generate_mise_config () {
+cat << 'EOF'
+[tools]
+node = "lts"
+"aqua:LuaLS/lua-language-server" = "latest"
+"aqua:koalaman/shellcheck"       = "latest"
+"go:mvdan.cc/sh/v3/cmd/shfmt"    = "latest"
+"npm:bash-language-server"       = { version = "latest", depends = ["aqua:koalaman/shellcheck", "go:mvdan.cc/sh/v3/cmd/shfmt"] }
+"npm:prettier"                   = "latest"
+"npm:prettier-plugin-awk"        = { version = "latest", depends = ["npm:prettier"] }
+"npm:npm:prettier-plugin-awk"    = { version = "latest", depends = ["npm:prettier", "npm:prettier-plugin-awk"] }
+EOF
+}
+
+
+# ---------------------------------------------------------
+# SOURCED NEOVIM/MISE CONFIGURATION FUNCTIONS
+# ---------------------------------------------------------
+
+
+# Generate a command that adds this project's bin dir to $PATH.
+# Suitable for sourcing.
+binpath () {
+  local sh_pid;    sh_pid=$$
+  local sh_invoke; sh_invoke="$(__get_shell_invocation "${sh_pid}")"
+  local bin_dir;   bin_dir="$(__get_bin_path "${sh_invoke}")"
+
+  echo "export PATH=\"${PATH}:${bin_dir}\""
+}
 
 
 # Start clean with mise env vars.
@@ -118,93 +203,8 @@ testenv () {
 
 
 # ---------------------------------------------------------
-# "PRIVATE" FUNCTIONS
-# ---------------------------------------------------------
-
-
-errcho () { echo "$@" >&2; }
-
-
-__get_shell_invocation() {
-  local shell_pid="${1}"
-
-  # The "=" after "command" disables header output
-  ps -o command= "${shell_pid}"
-}
-
-
-__get_bin_path_from_lib_path () {
-  local script_rel_path="${1}"
-
-  local script_full_path
-  local lib_dir_path
-  local grandparent_path
-  local bin_dir_path
-
-  script_full_path="$(realpath "${script_rel_path}")"
-  lib_dir_path="$(dirname "${script_full_path}")"
-  grandparent_path="$(dirname "${lib_dir_path}")"
-  bin_dir_path="${grandparent_path}/bin"
-
-  errcho "script_rel_path:  [${script_rel_path}]"  # DEBUG DELETEME
-  errcho "script_full_path: [${script_full_path}]" # DEBUG DELETEME
-  errcho "lib_dir_path:     [${lib_dir_path}]"     # DEBUG DELETEME
-  errcho "grandparent_path: [${grandparent_path}]" # DEBUG DELETEME
-  errcho "bin_dir_path:     [${bin_dir_path}]"     # DEBUG DELETEME
-
-  echo "${bin_dir_path}"
-}
-
-
-__get_bin_path () {
-  local shell_invocation="${1}"
-
-  if [[ $shell_invocation == *"bash"* ]]; then
-    __get_bin_path_from_lib_path "${BASH_SOURCE[0]}"
-  elif [[ $shell_invocation == *"zsh"* ]]; then
-    __get_bin_path_from_lib_path "${(%):-%x}"
-  else
-    # Sorry POSIX shell. You've got no reliable way to retrieve a fully qualified path to a sourced script.
-    errcho "Unsupported shell. Invocation: \"${shell_invocation}\""
-    return 67
-  fi
-}
-
-
-__generate_readme () {
-  echo "When using MISE_CEILING_PATHS, mise will search directories under the directory specified as the ceiling for config files, but _NOT_ the ceiling direct itself."
-}
-
-
-__generate_mise_config () {
-cat << 'EOF'
-[tools]
-node = "lts"
-"aqua:LuaLS/lua-language-server" = "latest"
-"aqua:koalaman/shellcheck"       = "latest"
-"go:mvdan.cc/sh/v3/cmd/shfmt"    = "latest"
-"npm:bash-language-server"       = { version = "latest", depends = ["aqua:koalaman/shellcheck", "go:mvdan.cc/sh/v3/cmd/shfmt"] }
-"npm:prettier"                   = "latest"
-"npm:prettier-plugin-awk"        = { version = "latest", depends = ["npm:prettier"] }
-"npm:npm:prettier-plugin-awk"    = { version = "latest", depends = ["npm:prettier", "npm:prettier-plugin-awk"] }
-EOF
-}
-
-
-# ---------------------------------------------------------
 # SUB COMMAND FUNCTIONS
 # ---------------------------------------------------------
-
-
-# Generate a command that adds this project's bin dir to $PATH.
-# Suitable for sourcing.
-binpath () {
-  local sh_pid;    sh_pid=$$
-  local sh_invoke; sh_invoke="$(__get_shell_invocation "${sh_pid}")"
-  local bin_dir;   bin_dir="$(__get_bin_path "${sh_invoke}")"
-
-  echo "export PATH=\"${PATH}:${bin_dir}\""
-}
 
 
 # Install Neovim LSPs and deps with mise.
