@@ -9,6 +9,90 @@ set -o errexit -o nounset
 
 
 # ---------------------------------------------------------
+# ENVIRONMENTAL CONFIGURATION
+# ---------------------------------------------------------
+
+
+declare -r K_CFGD="config_dir"
+declare -r K_GCFN="global_config_filename"
+declare -r K_GCRT="global_config_root"
+declare -r K_MENV="mise_env"
+declare -r K_NVCFGD="nvim_config_root"
+declare -r K_TESTD="test_dir"
+declare -r K_TDN="test_dir_name"
+declare -r K_TBKUP="test_dir_backup_dir"
+declare -r K_TOOLD="tool_installs_dir"
+
+
+__shellenv_config () {
+  # The global mise config filename
+  #global_config_filename="mise.neovim.toml"
+  local global_config_filename="mise.toml"
+
+  # Equivalent of {{ config_root }} for Neovim.
+  local nvim_config_root="${HOME}/.config/nvim"
+
+  # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
+  local global_config_root="${nvim_config_root}/mise"
+
+  # mise will only load config files from child dirs of {{ config_root }}.
+  # Config files in {{ config_root }} will be ignored.
+  local config_dir="${global_config_root}/config"
+
+  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
+  local tool_installs_dir="${HOME}/.local/share/nvim"
+
+  # A (-r)ead only, (-g)lobal, (-A)ssociative array
+  declare -rgA SHELL_ENV_CONFIG=(
+    [global_config_filename]="${global_config_filename}"
+    [nvim_config_root]="${nvim_config_root}"
+    [global_config_root]="${global_config_root}"
+    [config_dir]="${config_dir}"
+    [tool_installs_dir]="${tool_installs_dir}"
+  )
+}
+
+
+__testenv_config () {
+  local work_dir; work_dir="$(dirname "$0")"
+
+  local backup_dirname="test_dir_backups"
+
+  local test_dir_name="test"
+  local test_dir="${work_dir}/${test_dir_name}"
+
+  # The global mise config filename
+  #local global_config_filename="mise.neovim.toml"
+  local global_config_filename="mise.toml"
+
+  # Equivalent of {{ config_root }} for Neovim.
+  local nvim_config_root="${test_dir}/config_root"
+
+  # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
+  local global_config_root="${nvim_config_root}/mise"
+
+  # mise will only load config files from child dirs of {{ config_root }}.
+  # Config files in {{ config_root }} will be ignored.
+  local config_dir="${global_config_root}/config"
+
+  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
+  local tool_installs_dir="${test_dir}/installs"
+
+  # A (-r)ead only, (-g)lobal, (-A)ssociative array
+  declare -rgA TEST_ENV_CONFIG=(
+    [backup_dirname]="${backup_dirname}"
+    [test_dir_name]="${test_dir_name}"
+    [test_dir]="${test_dir}"
+    [global_config_filename]="${global_config_filename}"
+    [nvim_config_root]="${nvim_config_root}"
+    [global_config_root]="${global_config_root}"
+    [config_dir]="${config_dir}"
+    [tool_installs_dir]="${tool_installs_dir}"
+  )
+}
+
+
+# ---------------------------------------------------------
 # "PRIVATE" FUNCTIONS
 # ---------------------------------------------------------
 
@@ -110,95 +194,48 @@ cleanenv () {
 shellenv () {
   cleanenv
 
-  # The global mise config filename
-  #nvim_mise_global_config_filename="mise.neovim.toml"
-  local nvim_mise_global_config_filename="mise.toml"
-
-  # Equivalent of {{ config_root }} for Neovim.
-  local nvim_config_root="${HOME}/.config/nvim"
-
-  # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
-  local nvim_mise_global_config_root="${nvim_config_root}/mise"
-
-  # mise will only load config files from child dirs of {{ config_root }}.
-  # Config files in {{ config_root }} will be ignored.
-  local nvim_mise_config_dir="${nvim_mise_global_config_root}/config"
-
-  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
-  local nvim_mise_tool_installs_dir="${HOME}/.local/share/nvim"
-
-  # ---------------------------------------------------------
-  # MISE CONFIGURATION ENVIRONMENT VARIABLES
-  # ---------------------------------------------------------
-
   # Config file must be named config.neovim.toml or mise.neovim.toml.
-  #echo "export MISE_ENV=\"neovim\""
+  #echo "export MISE_ENV=\"${SHELL_ENV_CONFIG[$K_MENV]}\""
 
   # Force the global config to live under Neovim's config tree by
-  # making mise's {{ config_root }} live one directory below Neovim's
+  # making mise's {{ config_root }} live one directory below Neovim's.
   # Relative paths in environment directives are resolved against {{ config_root }}.
-  echo "export MISE_GLOBAL_CONFIG_ROOT=\"${nvim_mise_global_config_root}\""
+  echo "export MISE_GLOBAL_CONFIG_ROOT=\"${SHELL_ENV_CONFIG[$K_GCRT]}\""
 
-  # Fully qualified path to the isolated global mise config for Neovim
-  echo "export MISE_GLOBAL_CONFIG_FILE=\"${nvim_mise_config_dir}/${nvim_mise_global_config_filename}\""
+  # Fully qualified path to the isolated global mise config for Neovim.
+  echo "export MISE_GLOBAL_CONFIG_FILE=\"${SHELL_ENV_CONFIG[$K_CFGD]}/${SHELL_ENV_CONFIG[$K_GCFN]}\""
 
-  # Prevents merging any config files found above $NVIM_MISE_GLOBAL_CONFIG_ROOT.
-  echo "export MISE_CEILING_PATHS=\"${nvim_mise_global_config_root}\""
+  # Prevents merging any config files found above the global config root.
+  echo "export MISE_CEILING_PATHS=\"${SHELL_ENV_CONFIG[$K_GCRT]}\""
 
   # This is where tools are installed to when running mise install/use.
   # See:
   #     https://mise.jdx.dev/directories.html#local-share-mise-installs
-  echo "export MISE_INSTALLS_DIR=\"${nvim_mise_tool_installs_dir}\""
+  echo "export MISE_INSTALLS_DIR=\"${SHELL_ENV_CONFIG[$K_TOOLD]}\""
 }
 
 
 testenv () {
   cleanenv
 
-  local work_dir; work_dir="$(dirname "$0")"
-
-  local test_dir_name="test"
-  local test_dir="${work_dir}/${test_dir_name}"
-
-  # The global mise config filename
-  #local nvim_mise_global_config_filename="mise.neovim.toml"
-  local nvim_mise_global_config_filename="mise.toml"
-
-  # Equivalent of {{ config_root }} for Neovim.
-  local nvim_config_root="${test_dir}/config_root"
-
-  # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
-  local nvim_mise_global_config_root="${nvim_config_root}/mise"
-
-  # mise will only load config files from child dirs of {{ config_root }}.
-  # Config files in {{ config_root }} will be ignored.
-  local nvim_mise_config_dir="${nvim_mise_global_config_root}/config"
-
-  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
-  local nvim_mise_tool_installs_dir="${test_dir}/installs"
-
-  # ---------------------------------------------------------
-  # MISE CONFIGURATION ENVIRONMENT VARIABLES
-  # ---------------------------------------------------------
-
   # Config file must be named config.neovim.toml or mise.neovim.toml.
-  #echo "export MISE_ENV=\"neovim\""
+  #echo "export MISE_ENV=\"${TEST_ENV_CONFIG[$K_MENV]}\""
 
   # Force the global config to live under Neovim's config tree by
   # making mise's {{ config_root }} live one directory below Neovim's
   # Relative paths in environment directives are resolved against {{ config_root }}.
-  echo "export MISE_GLOBAL_CONFIG_ROOT=\"${nvim_mise_global_config_root}\""
+  echo "export MISE_GLOBAL_CONFIG_ROOT=\"${TEST_ENV_CONFIG[$K_GCRT]}\""
 
   # Fully qualified path to the isolated global mise config for Neovim
-  echo "export MISE_GLOBAL_CONFIG_FILE=\"${nvim_mise_config_dir}/${nvim_mise_global_config_filename}\""
+  echo "export MISE_GLOBAL_CONFIG_FILE=\"${TEST_ENV_CONFIG[$K_CFGD]}/${TEST_ENV_CONFIG[$K_GCFN]}\""
 
   # Prevents merging any config files found above $NVIM_MISE_GLOBAL_CONFIG_ROOT.
-  echo "export MISE_CEILING_PATHS=\"${nvim_mise_global_config_root}\""
+  echo "export MISE_CEILING_PATHS=\"${TEST_ENV_CONFIG[$K_GCRT]}\""
 
   # This is where tools are installed to when running mise install/use.
   # See:
   #     https://mise.jdx.dev/directories.html#local-share-mise-installs
-  echo "export MISE_INSTALLS_DIR=\"${nvim_mise_tool_installs_dir}\""
+  echo "export MISE_INSTALLS_DIR=\"${TEST_ENV_CONFIG[$K_TOOLD]}\""
 }
 
 
@@ -227,29 +264,29 @@ cfg () { show_mise_config; }
 #     └── config                NVIM_MISE_CONFIG_DIR
 #         └── mise.toml
 setup_test_dir () {
-  local backup_dir="test_dir_backups"
+  local backup_dirname="${TEST_ENV_CONFIG[$K_TBKUP]}"
 
   # Check if test directory exists. If so, back it up and delete the tree
-  if [ -d "${TEST_DIR}" ]; then
+  if [ -d "${TEST_ENV_CONFIG[$K_TESTD]}" ]; then
     local timestamp; timestamp=$(date +%s)
-    local backup_filename="${TEST_DIR_NAME}_${timestamp}.tgz"
+    local backup_filename="${TEST_ENV_CONFIG[$K_TDN]}_${timestamp}.tgz"
 
-    gtar -czvf "${backup_filename}" "${TEST_DIR_NAME}"
-    mv "${backup_filename}" "${backup_dir}"
-    rm -rf "${TEST_DIR_NAME}"
+    gtar -czvf "${backup_filename}" "${TEST_ENV_CONFIG[$K_TDN]}"
+    mv "${backup_filename}" "${TEST_ENV_CONFIG[$K_TBKUP]}"
+    rm -rf "${TEST_ENV_CONFIG[$K_TDN]}"
 
-    echo "Found \"${TEST_DIR}\". Backed up to \"${backup_dir}/${backup_filename}\""
+    echo "Found \"${TEST_ENV_CONFIG[$K_TESTD]}\". Backed up to \"${TEST_ENV_CONFIG[$K_TBKUP]}/${backup_filename}\""
   fi
 
   # Create the folder structure
-  mkdir -p "${NVIM_MISE_CONFIG_DIR}"
-  mkdir -p "${NVIM_TOOL_INSTALL_ROOT}"
+  mkdir -p "${TEST_ENV_CONFIG[$K_CFGD]}"
+  mkdir -p "${TEST_ENV_CONFIG[$K_TOOLD]}"
 
   # Create README for config_root
-  __generate_readme > "${NVIM_CONFIG_ROOT}/README.txt"
+  __generate_readme > "${TEST_ENV_CONFIG[$K_NVCFGD]}/README.txt"
 
   # Create mise config file
-  __generate_mise_config > "${NVIM_MISE_CONFIG_DIR}/${NVIM_MISE_GLOBAL_CONFIG_FILENAME}"
+  __generate_mise_config > "${TEST_ENV_CONFIG[$K_CFGD]}/${TEST_ENV_CONFIG[$K_GCFN]}"
 }
 
 # Short name for the setup_test_dir command.
@@ -259,6 +296,10 @@ testup () { setup_test_dir; }
 # ---------------------------------------------------------
 # EXECUTE THE SUB-COMMAND
 # ---------------------------------------------------------
+
+# Populate read-only associative arrays.
+__shellenv_config
+__testenv_config
 
 # $@ should match one of the sub-command function names above.
 "${@}"
