@@ -35,7 +35,7 @@ dev_env () {
   # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
   local nvim_mise_global_config_root="${nvim_config_root}/mise"
 
-  # mise will not load config files from child dirs of {{ config_root }}.
+  # mise will only load config files from child dirs of {{ config_root }}.
   # Config files in {{ config_root }} will be ignored.
   local nvim_mise_config_dir="${nvim_mise_global_config_root}/config"
 
@@ -85,7 +85,7 @@ test_env () {
   # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
   local nvim_mise_global_config_root="${nvim_config_root}/mise"
 
-  # mise will not load config files from child dirs of {{ config_root }}.
+  # mise will only load config files from child dirs of {{ config_root }}.
   # Config files in {{ config_root }} will be ignored.
   local nvim_mise_config_dir="${nvim_mise_global_config_root}/config"
 
