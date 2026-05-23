@@ -5,7 +5,10 @@
 # A handy cli tool to for setting up files, folders, and env vars for Neovim/mise experimentation
 
 # Same as `set -eu`
-set -o errexit -o nounset
+#     -o errexit [-e]:    Fail and exit the script if a command or command list fails.
+#     -o nounset [-u]:    Fail and exit if an undeclared/uninitialized variable is referenced.
+#     -o pipefail:        Fail and exit if any command in a pipeline fails.
+set -o errexit -o nounset -o pipefail
 
 
 # ---------------------------------------------------------
@@ -13,6 +16,7 @@ set -o errexit -o nounset
 # ---------------------------------------------------------
 
 
+# Constants for use as associative array keys
 declare -r K_CFGD="config_dir"
 declare -r K_GCFN="global_config_filename"
 declare -r K_GCRT="global_config_root"
@@ -24,6 +28,7 @@ declare -r K_TBKUP="test_dir_backup_dir"
 declare -r K_TOOLD="tool_installs_dir"
 
 
+# Use this for actual day-to-day usage
 __shellenv_config () {
   # The global mise config filename
   #global_config_filename="mise.neovim.toml"
@@ -39,10 +44,11 @@ __shellenv_config () {
   # Config files in {{ config_root }} will be ignored.
   local config_dir="${global_config_root}/config"
 
-  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
+  # Isolated install path for neovim related tools (LSPs and deps) under Neovim's data dir.
   local tool_installs_dir="${HOME}/.local/share/nvim"
 
-  # A (-r)ead only, (-g)lobal, (-A)ssociative array
+  # No interest in serializing an associative array as a "return value."
+  # Create a (-r)ead-only, (-g)lobal, (-A)ssociative array instead.
   declare -rgA SHELL_ENV_CONFIG=(
     [global_config_filename]="${global_config_filename}"
     [nvim_config_root]="${nvim_config_root}"
@@ -53,6 +59,7 @@ __shellenv_config () {
 }
 
 
+# Use this to test and develop mise and Neovim integration
 __testenv_config () {
   local work_dir; work_dir="$(dirname "$0")"
 
@@ -75,10 +82,11 @@ __testenv_config () {
   # Config files in {{ config_root }} will be ignored.
   local config_dir="${global_config_root}/config"
 
-  # Cleaner install of neovim related tools (LSPs and deps) to a dir under Neovim's data dir.
+  # Isolated install path for neovim related tools (LSPs and deps) under Neovim's data dir.
   local tool_installs_dir="${test_dir}/installs"
 
-  # A (-r)ead only, (-g)lobal, (-A)ssociative array
+  # No interest in serializing an associative array as a "return value."
+  # Create a (-r)ead-only, (-g)lobal, (-A)ssociative array instead.
   declare -rgA TEST_ENV_CONFIG=(
     [backup_dirname]="${backup_dirname}"
     [test_dir_name]="${test_dir_name}"
@@ -97,9 +105,11 @@ __testenv_config () {
 # ---------------------------------------------------------
 
 
+# echo to STDERR
 errcho () { echo "$@" >&2; }
 
 
+# Get the invocation string for the process running this script.
 __get_shell_invocation() {
   local shell_pid="${1}"
 
@@ -108,6 +118,11 @@ __get_shell_invocation() {
 }
 
 
+# Get the fully qualified path to this project's bin directory from the
+# relative path to this script.
+#
+# This used to live separately in the lib directory of this project.
+# Not sure it's needed anymore.
 __get_bin_path_from_lib_path () {
   local script_rel_path="${1}"
 
@@ -130,7 +145,8 @@ __get_bin_path_from_lib_path () {
   echo "${bin_dir_path}"
 }
 
-
+# Determine whether the shell is bash or zsh, determine the shell's invocation,
+# and fetch a fully qualified path to this project's bin directory.
 __get_bin_path () {
   local shell_invocation="${1}"
 
@@ -146,11 +162,12 @@ __get_bin_path () {
 }
 
 
+# Generate body text for the test directory's README file.
 __generate_readme () {
   echo "When using MISE_CEILING_PATHS, mise will search directories under the directory specified as the ceiling for config files, but _NOT_ the ceiling direct itself."
 }
 
-
+# Generate the body of the mise config for testing/working with LSPs in Neovim.
 __generate_mise_config () {
 cat << 'EOF'
 [tools]
