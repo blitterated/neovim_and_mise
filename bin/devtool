@@ -4,6 +4,15 @@
 #
 # A handy cli tool to for setting up files, folders, and env vars for Neovim/mise experimentation
 
+
+# ---------------------------------------------------------
+# BASH STRICT MODE
+# ---------------------------------------------------------
+
+
+# Docs:
+#     https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html#The-Set-Builtin-1
+#
 # Same as `set -eu`
 #     -o errexit [-e]:    Fail and exit the script if a command or command list fails.
 #     -o nounset [-u]:    Fail and exit if an undeclared/uninitialized variable is referenced.
