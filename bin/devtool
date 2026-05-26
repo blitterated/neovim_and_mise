@@ -176,55 +176,56 @@ debug_log () { if $SCRIPT_DEBUG; then errcho "\e[33m${*}\e[0m" >&2; fi }
 
 
 # Get the invocation string for the process running this script.
-__get_shell_invocation() {
+__get_shell_invocation () {
   local shell_pid="${1}"
 
-  # The "=" after "command" disables header output
+  debug_log "__get_shell_invocation -> shell_pid:                  [${shell_pid}]"     # DEBUG DELETEME
+
+  # The "=" after "command" disables header output.
   ps -o command= "${shell_pid}"
+}
+
+
+# Determine whether the shell is bash or zsh, determine the shell's invocation,
+# and fetch a fully qualified path to this project's bin directory.
+__get_script_rel_path_by_shell () {
+  local shell_invocation="${1}"
+
+  debug_log "__get_script_rel_path_by_shell -> shell_invocation:   [${shell_invocation}]"     # DEBUG DELETEME
+
+  if [[ $shell_invocation == *"bash"* ]]; then
+    echo "${BASH_SOURCE[0]}"
+  elif [[ $shell_invocation == *"zsh"* ]]; then
+    echo "${(%):-%x}"
+  else
+    # Sorry POSIX shell. You've got no reliable way to retrieve a fully qualified path to a sourced script.
+    errcho "Unsupported shell. Invocation: \"${shell_invocation}\""
+    exit 67
+  fi
 }
 
 
 # Get the fully qualified path to this project's bin directory from the
 # relative path to this script.
-#
-# This used to live separately in the lib directory of this project.
-# Not sure it's needed anymore.
-__get_bin_path_from_lib_path () {
-  local script_rel_path="${1}"
-
-  local script_full_path
-  local lib_dir_path
-  local grandparent_path
-  local bin_dir_path
-
-  script_full_path="$(realpath "${script_rel_path}")"
-  lib_dir_path="$(dirname "${script_full_path}")"
-  grandparent_path="$(dirname "${lib_dir_path}")"
-  bin_dir_path="${grandparent_path}/bin"
-
-  errcho "script_rel_path:  [${script_rel_path}]"  # DEBUG DELETEME
-  errcho "script_full_path: [${script_full_path}]" # DEBUG DELETEME
-  errcho "lib_dir_path:     [${lib_dir_path}]"     # DEBUG DELETEME
-  errcho "grandparent_path: [${grandparent_path}]" # DEBUG DELETEME
-  errcho "bin_dir_path:     [${bin_dir_path}]"     # DEBUG DELETEME
-
-  echo "${bin_dir_path}"
-}
-
-# Determine whether the shell is bash or zsh, determine the shell's invocation,
-# and fetch a fully qualified path to this project's bin directory.
 __get_bin_path () {
   local shell_invocation="${1}"
 
-  if [[ $shell_invocation == *"bash"* ]]; then
-    __get_bin_path_from_lib_path "${BASH_SOURCE[0]}"
-  elif [[ $shell_invocation == *"zsh"* ]]; then
-    __get_bin_path_from_lib_path "${(%):-%x}"
-  else
-    # Sorry POSIX shell. You've got no reliable way to retrieve a fully qualified path to a sourced script.
-    errcho "Unsupported shell. Invocation: \"${shell_invocation}\""
-    return 67
-  fi
+  local script_full_path
+  local project_path
+  local bin_dir_path
+
+  local script_rel_path; script_rel_path="$(__get_script_rel_path_by_shell "${shell_invocation}")"
+
+  script_full_path="$(realpath "${script_rel_path}")" # child
+  bin_dir_path="$(dirname "${script_full_path}")"     # parent
+  project_path="$(dirname "${bin_dir_path}")"         # grandparent
+
+  debug_log "__get_bin_path -> script_rel_path:                    [${script_rel_path}]"  # DEBUG DELETEME
+  debug_log "__get_bin_path -> script_full_path:                   [${script_full_path}]" # DEBUG DELETEME
+  debug_log "__get_bin_path -> bin_dir_path:                       [${bin_dir_path}]"     # DEBUG DELETEME
+  debug_log "__get_bin_path -> project_path:                       [${project_path}]"     # DEBUG DELETEME
+
+  echo "${bin_dir_path}"
 }
 
 
@@ -232,6 +233,7 @@ __get_bin_path () {
 __generate_readme () {
   echo "When using MISE_CEILING_PATHS, mise will search directories under the directory specified as the ceiling for config files, but _NOT_ the ceiling direct itself."
 }
+
 
 # Generate the body of the mise config for testing/working with LSPs in Neovim.
 __generate_mise_config () {
@@ -259,9 +261,13 @@ EOF
 binpath () {
   local sh_pid;    sh_pid=$$
   local sh_invoke; sh_invoke="$(__get_shell_invocation "${sh_pid}")"
-  local bin_dir;   bin_dir="$(__get_bin_path "${sh_invoke}")"
+  local bin_path;  bin_path="$(__get_bin_path "${sh_invoke}")"
 
-  echo "export PATH=\"${PATH}:${bin_dir}\""
+  debug_log "binpath -> sh_pid:                                    [${sh_pid}]"     # DEBUG DELETEME
+  debug_log "binpath -> sh_invoke:                                 [${sh_invoke}]"  # DEBUG DELETEME
+  debug_log "binpath -> bin_path:                                  [${bin_path}]"   # DEBUG DELETEME
+
+  echo "export PATH=\"${PATH}:${bin_path}\""
 }
 
 
