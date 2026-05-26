@@ -13,11 +13,19 @@
 # Docs:
 #     https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html#The-Set-Builtin-1
 #
-# Same as `set -eu`
-#     -o errexit [-e]:    Fail and exit the script if a command or command list fails.
-#     -o nounset [-u]:    Fail and exit if an undeclared/uninitialized variable is referenced.
+# Options used:
+#     -E [-o errtrace]:   Fail and exit if a function, command substitution, or subshell fails.
+#     -e [-o errexit]:    Fail and exit if a command or command list fails.
+#     -u [-o nounset]:    Fail and exit if an undeclared/uninitialized variable is referenced.
 #     -o pipefail:        Fail and exit if any command in a pipeline fails.
-set -o errexit -o nounset -o pipefail
+set -Eeu -o pipefail
+
+
+# ---------------------------------------------------------
+# DEBUG
+# ---------------------------------------------------------
+
+SCRIPT_DEBUG=true
 
 
 # ---------------------------------------------------------
