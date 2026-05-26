@@ -112,23 +112,23 @@ __shellenv_config () {
   # No interest in serializing an associative array as a "return value."
   # Create a (-r)ead-only, (-g)lobal, (-A)ssociative array instead.
   declare -rgA SHELL_ENV_CONFIG=(
-    [global_config_filename]="${global_config_filename}"
-    [nvim_config_root]="${nvim_config_root}"
-    [global_config_root]="${global_config_root}"
-    [config_dir]="${config_dir}"
-    [tool_installs_dir]="${tool_installs_dir}"
+    [${K_GCFN}]="${global_config_filename}"
+    [${K_NVCFGD}]="${nvim_config_root}"
+    [${K_GCRT}]="${global_config_root}"
+    [${K_CFGD}]="${config_dir}"
+    [${K_TOOLD}]="${tool_installs_dir}"
   )
 }
 
 
 # Use this to test and develop mise and Neovim integration
 __testenv_config () {
-  local work_dir; work_dir="$(dirname "$0")"
+  local project_path; project_path="$(__get_project_path)"
 
   local backup_dirname="test_dir_backups"
 
   local test_dir_name="test"
-  local test_dir="${work_dir}/${test_dir_name}"
+  local test_dir="${project_path}/${test_dir_name}"
 
   # The global mise config filename
   #local global_config_filename="mise.neovim.toml"
@@ -150,14 +150,14 @@ __testenv_config () {
   # No interest in serializing an associative array as a "return value."
   # Create a (-r)ead-only, (-g)lobal, (-A)ssociative array instead.
   declare -rgA TEST_ENV_CONFIG=(
-    [backup_dirname]="${backup_dirname}"
-    [test_dir_name]="${test_dir_name}"
-    [test_dir]="${test_dir}"
-    [global_config_filename]="${global_config_filename}"
-    [nvim_config_root]="${nvim_config_root}"
-    [global_config_root]="${global_config_root}"
-    [config_dir]="${config_dir}"
-    [tool_installs_dir]="${tool_installs_dir}"
+    [${K_TBKUP}]="${backup_dirname}"
+    [${K_TDN}]="${test_dir_name}"
+    [${K_TESTD}]="${test_dir}"
+    [${K_GCFN}]="${global_config_filename}"
+    [${K_NVCFGD}]="${nvim_config_root}"
+    [${K_GCRT}]="${global_config_root}"
+    [${K_CFGD}]="${config_dir}"
+    [${K_TOOLD}]="${tool_installs_dir}"
   )
 }
 
@@ -177,9 +177,9 @@ debug_log () { if $SCRIPT_DEBUG; then errcho "\e[33m${*}\e[0m" >&2; fi }
 
 # Get the invocation string for the process running this script.
 __get_shell_invocation () {
-  local shell_pid="${1}"
+  local shell_pid="$$"
 
-  debug_log "__get_shell_invocation -> shell_pid:                  [${shell_pid}]"     # DEBUG DELETEME
+  debug_log "__get_shell_invocation -> shell_pid:                  [${shell_pid}]"
 
   # The "=" after "command" disables header output.
   ps -o command= "${shell_pid}"
@@ -189,9 +189,9 @@ __get_shell_invocation () {
 # Determine whether the shell is bash or zsh, determine the shell's invocation,
 # and fetch a fully qualified path to this project's bin directory.
 __get_script_rel_path_by_shell () {
-  local shell_invocation="${1}"
+  local shell_invocation; shell_invocation="$(__get_shell_invocation)"
 
-  debug_log "__get_script_rel_path_by_shell -> shell_invocation:   [${shell_invocation}]"     # DEBUG DELETEME
+  debug_log "__get_script_rel_path_by_shell -> shell_invocation:   [${shell_invocation}]"
 
   if [[ $shell_invocation == *"bash"* ]]; then
     echo "${BASH_SOURCE[0]}"
@@ -205,27 +205,38 @@ __get_script_rel_path_by_shell () {
 }
 
 
+# Get the fully qualified path to this project's root directory from the
+# relative path to this script.
+__get_project_path () {
+  local script_full_path
+  local project_path
+  local bin_path
+
+  local script_rel_path; script_rel_path="$(__get_script_rel_path_by_shell)"
+
+  script_full_path="$(realpath "${script_rel_path}")" # child
+  bin_path="$(dirname "${script_full_path}")"         # parent
+  project_path="$(dirname "${bin_path}")"             # grandparent
+
+  debug_log "__get_project_path -> script_rel_path:                [${script_rel_path}]" 
+  debug_log "__get_project_path -> script_full_path:               [${script_full_path}]"
+  debug_log "__get_project_path -> bin_path:                       [${bin_path}]"
+  debug_log "__get_project_path -> project_path:                   [${project_path}]"
+
+  echo "${project_path}"
+}
+
+
 # Get the fully qualified path to this project's bin directory from the
 # relative path to this script.
 __get_bin_path () {
-  local shell_invocation="${1}"
+  local project_path; project_path="$(__get_project_path)"
+  local bin_path; bin_path="${project_path}/bin"
 
-  local script_full_path
-  local project_path
-  local bin_dir_path
+  debug_log "__get_bin_path -> project_path:                       [${project_path}]"
+  debug_log "__get_bin_path -> bin_path:                           [${bin_path}]"
 
-  local script_rel_path; script_rel_path="$(__get_script_rel_path_by_shell "${shell_invocation}")"
-
-  script_full_path="$(realpath "${script_rel_path}")" # child
-  bin_dir_path="$(dirname "${script_full_path}")"     # parent
-  project_path="$(dirname "${bin_dir_path}")"         # grandparent
-
-  debug_log "__get_bin_path -> script_rel_path:                    [${script_rel_path}]"  # DEBUG DELETEME
-  debug_log "__get_bin_path -> script_full_path:                   [${script_full_path}]" # DEBUG DELETEME
-  debug_log "__get_bin_path -> bin_dir_path:                       [${bin_dir_path}]"     # DEBUG DELETEME
-  debug_log "__get_bin_path -> project_path:                       [${project_path}]"     # DEBUG DELETEME
-
-  echo "${bin_dir_path}"
+  echo "${bin_path}"
 }
 
 
@@ -259,15 +270,7 @@ EOF
 # Generate a command that adds this project's bin dir to $PATH.
 # Suitable for sourcing.
 binpath () {
-  local sh_pid;    sh_pid=$$
-  local sh_invoke; sh_invoke="$(__get_shell_invocation "${sh_pid}")"
-  local bin_path;  bin_path="$(__get_bin_path "${sh_invoke}")"
-
-  debug_log "binpath -> sh_pid:                                    [${sh_pid}]"     # DEBUG DELETEME
-  debug_log "binpath -> sh_invoke:                                 [${sh_invoke}]"  # DEBUG DELETEME
-  debug_log "binpath -> bin_path:                                  [${bin_path}]"   # DEBUG DELETEME
-
-  echo "export PATH=\"${PATH}:${bin_path}\""
+  echo "export PATH=\"${PATH}:$(__get_bin_path)\""
 }
 
 
@@ -353,6 +356,14 @@ cfg () { show_mise_config; }
 #     └── config                NVIM_MISE_CONFIG_DIR
 #         └── mise.toml
 setup_test_dir () {
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_TBKUP]:           [${TEST_ENV_CONFIG[$K_TBKUP]}]"
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_TESTD]:           [${TEST_ENV_CONFIG[$K_TESTD]}]"
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_TDN]:             [${TEST_ENV_CONFIG[$K_TDN]}]"
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_CFGD]:            [${TEST_ENV_CONFIG[$K_CFGD]}]"
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_TOOLD]:           [${TEST_ENV_CONFIG[$K_TOOLD]}]"
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_NVCFGD]:          [${TEST_ENV_CONFIG[$K_NVCFGD]}]"
+  debug_log "setup_test_dir -> TEST_ENV_CONFIG[K_GCFN]:            [${TEST_ENV_CONFIG[$K_GCFN]}]"
+
   local backup_dirname="${TEST_ENV_CONFIG[$K_TBKUP]}"
 
   # Check if test directory exists. If so, back it up and delete the tree
