@@ -167,8 +167,12 @@ __testenv_config () {
 # ---------------------------------------------------------
 
 
-# echo to STDERR
-errcho () { echo "$@" >&2; }
+# echo to STDERR.
+errcho () { echo -e "${*}" >&2; }
+
+
+# log to STDERR with yellow text.
+debug_log () { if $SCRIPT_DEBUG; then errcho "\e[33m${*}\e[0m" >&2; fi }
 
 
 # Get the invocation string for the process running this script.
