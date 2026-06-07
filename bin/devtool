@@ -69,6 +69,15 @@ COMMANDS:
                                         └── mise.toml
   show_mise_config, cfg     - Show mise's configuration hierarchy.
 
+
+EXAMPLES:
+
+  Setup a directory for testing a neovim and mise configuration.
+
+    source bin/devtool binpath
+    source devtool testenv
+    devtool testup
+
 HELPDOC
 }
 
