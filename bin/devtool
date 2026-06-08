@@ -35,51 +35,51 @@ SCRIPT_DEBUG=false
 
 
 help () {
-cat << HELPDOC
-
-USAGE:
-
-  devtool [ help |
-          [ install_neovim_lsps | lsp ] |
-          [ setup_test_dir | testup ] |
-          [ show_mise_config | cfg ] ]
-
-
-SOURCE USAGE:
-
-  source "\$(devtool [ binpath | cleanenv | shellenv | testenv ])"
-
-
-ENV SETUP COMMANDS:
-
-  All of these commands should have their output sourced by the user's interactive shell.
-
-  binpath     - Export \$PATH with this project's bin directory appended.
-  cleanenv    - Unset mise env vars.
-  shellenv    - Export mise env vars and values for "production" usage. Calls cleanenv().
-  testenv     - Export mise env vars with values for isolated testing. Calls cleanenv().
-
-
-COMMANDS:
-
-  install_neovim_lsps, lsp  - Install Neovim LSPs and deps with mise.
-  setup_test_dir, testup    - Sets up a test directory in the project with the following structure:
-                                \$NVIM_CONFIG_ROOT
-                                └── mise                      NVIM_MISE_GLOBAL_CONFIG_ROOT
-                                    └── config                NVIM_MISE_CONFIG_DIR
-                                        └── mise.toml
-  show_mise_config, cfg     - Show mise's configuration hierarchy.
-
-
-EXAMPLES:
-
-  Setup a directory for testing a neovim and mise configuration.
-
-    source bin/devtool binpath
-    source devtool testenv
-    devtool testup
-
-HELPDOC
+cat <<- HELPDOC
+	
+	USAGE:
+	
+	  devtool [ help |
+	          [ install_neovim_lsps | lsp ] |
+	          [ setup_test_dir | testup ] |
+	          [ show_mise_config | cfg ] ]
+	
+	
+	EVAL USAGE:
+	
+    eval "\$(bin/devtool [ binpath | cleanenv | shellenv | testenv ])"
+	
+	
+	ENV SETUP COMMANDS:
+	
+	  All of these commands should have their output eval-ed by the user's interactive shell.
+	
+	  binpath     - Export \$PATH with this project's bin directory appended.
+	  cleanenv    - Unset mise env vars.
+	  shellenv    - Export mise env vars and values for "production" usage. Calls cleanenv().
+	  testenv     - Export mise env vars with values for isolated testing. Calls cleanenv().
+	
+	
+	COMMANDS:
+	
+	  install_neovim_lsps, lsp  - Install Neovim LSPs and deps with mise.
+	  setup_test_dir, testup    - Sets up a test directory in the project with the following structure:
+	                                \$NVIM_CONFIG_ROOT
+	                                └── mise                      NVIM_MISE_GLOBAL_CONFIG_ROOT
+	                                    └── config                NVIM_MISE_CONFIG_DIR
+	                                        └── mise.toml
+	  show_mise_config, cfg     - Show mise's configuration hierarchy.
+	
+	
+	EXAMPLES:
+	
+	  Setup a directory for testing a neovim and mise configuration.
+	
+      eval "\$(bin/devtool binpath)"
+      eval "\$(devtool testenv)"
+	    devtool testup
+	
+	HELPDOC
 }
 
 
