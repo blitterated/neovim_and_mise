@@ -298,6 +298,7 @@ binpath () {
 cleanenv () {
   echo "unset MISE_CEILING_PATHS"
   echo "unset MISE_ENV"
+  echo "unset MISE_GLOBAL_CONFIG_FILE"
   echo "unset MISE_GLOBAL_CONFIG_ROOT"
   echo "unset MISE_INSTALLS_DIR"
 }
