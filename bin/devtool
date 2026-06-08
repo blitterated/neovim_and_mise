@@ -280,7 +280,18 @@ __generate_mise_config () {
 # Generate a command that adds this project's bin dir to $PATH.
 # Suitable for sourcing.
 binpath () {
-  echo "export PATH=\"${PATH}:$(__get_bin_path)\""
+  #echo "export PATH=\"${PATH}:$(__get_bin_path)\""
+
+  local bin_path
+  bin_path="$(__get_bin_path)"
+
+	cat <<- BINPATH
+	if [[ ":\$PATH:" == *":${bin_path}:"* ]]; then
+	  echo "bin/ is already on the path."
+	else
+	  export PATH="\${PATH}:${bin_path}"
+	fi
+	BINPATH
 }
 
 
