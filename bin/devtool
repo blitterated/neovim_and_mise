@@ -25,7 +25,8 @@ set -Eeu -o pipefail
 # DEBUG
 # ---------------------------------------------------------
 
-SCRIPT_DEBUG=true
+#SCRIPT_DEBUG=true
+SCRIPT_DEBUG=false
 
 
 # ---------------------------------------------------------
