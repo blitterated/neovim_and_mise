@@ -208,7 +208,6 @@ __get_script_rel_path_by_shell () {
   elif [[ $shell_invocation == *"zsh"* ]]; then
     echo "${(%):-%x}"
   else
-    # Sorry POSIX shell. You've got no reliable way to retrieve a fully qualified path to a sourced script.
     errcho "Unsupported shell. Invocation: \"${shell_invocation}\""
     exit 67
   fi
@@ -273,12 +272,12 @@ __generate_mise_config () {
 
 
 # ---------------------------------------------------------
-# SOURCED NEOVIM/MISE CONFIGURATION FUNCTIONS
+# EVAL-ABLE NEOVIM/MISE CONFIGURATION FUNCTIONS
 # ---------------------------------------------------------
 
 
 # Generate a command that adds this project's bin dir to $PATH.
-# Suitable for sourcing.
+# Suitable for eval-ing.
 binpath () {
   #echo "export PATH=\"${PATH}:$(__get_bin_path)\""
 
