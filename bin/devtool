@@ -107,7 +107,7 @@ __shellenv_config () {
   local global_config_filename="mise.toml"
 
   # Equivalent of {{ config_root }} for Neovim.
-  local nvim_config_root="${HOME}/.config/nvim"
+  local nvim_config_root="$(nvim -l <( echo "print(vim.fn.stdpath('config'))" ) 2>&1)"
 
   # Directory under {{ config_root }} that contains the isolated global mise config for Neovim.
   local global_config_root="${nvim_config_root}/mise"
@@ -117,7 +117,7 @@ __shellenv_config () {
   local config_dir="${global_config_root}/config"
 
   # Isolated install path for neovim related tools (LSPs and deps) under Neovim's data dir.
-  local tool_installs_dir="${HOME}/.local/share/nvim"
+  local tool_installs_dir="$(nvim -l <( echo "print(vim.fn.stdpath('data'))" ) 2>&1)"
 
   # No interest in serializing an associative array as a "return value."
   # Create a (-r)ead-only, (-g)lobal, (-A)ssociative array instead.
